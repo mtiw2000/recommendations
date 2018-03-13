@@ -62,8 +62,6 @@ import scipy.sparse as sp
 from scipy.sparse.linalg import svds
 from IPython.display import Image
 from IPython.display import display
-
-
 import matplotlib.pyplot as plt
 import seaborn as sns
 
