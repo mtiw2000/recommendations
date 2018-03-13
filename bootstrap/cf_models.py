@@ -234,7 +234,10 @@ def visualize(k_array,train_data_matrix,test_data_matrix,metric_type):
 
 
 def get_movies_data():
-    os.chdir('C:\python_code\projects\movie_data')
+
+    os.getcwd()
+    os.chdir('C:/python_code/recommendations/data')
+
 
     header = ['user_id', 'movie_id', 'rating', 'timestamp']
     df_ratings = pd.read_csv('ratings.csv', sep=',', names=header, header=0,
@@ -280,6 +283,10 @@ def print_similar_movies(movie_data, movie_id, top_indexes):
     for id in top_indexes + 1:
         print movie_data[movie_data.movie_id == id].title.values[0]
 
+
+
+def svd_similarity():
+    
 
     os.chdir('C:\python_code\projects\movie_data')
     print os.getcwd()
@@ -345,7 +352,6 @@ def print_similar_movies(movie_data, movie_id, top_indexes):
 
     train_data_matrix[0,v_top_reco]
 
-
 #import scipy.sparse as sp
 #from scipy.sparse.linalg import svds
 #
@@ -399,9 +405,6 @@ def print_similar_movies(movie_data, movie_id, top_indexes):
     rmse = get_mse(test_data_matrix_hat,test_data_matrix)
     print rmse
  
-  
-  
-    
     
     k = 50
     movie_id = 0 # Grab an id from movies.dat
@@ -424,7 +427,8 @@ def print_similar_movies(movie_data, movie_id, top_indexes):
     indexes = top_cosine_similarity(sliced, movie_id, top_n)
     print_similar_movies(movie_data, movie_id, indexes)
     
-
+def pca_similarity():
+    
 #PCA    
     cov_mat = np.cov(normalised_mat.T)
     evals, evecs = np.linalg.eig(cov_mat)
@@ -433,8 +437,8 @@ def print_similar_movies(movie_data, movie_id, top_indexes):
     movie_id = 0 # Grab an id from movies.dat
     top_n = 10
  
-sliced = evecs[:, :k] # representative data
-top_indexes = top_cosine_similarity(sliced, movie_id, top_n)
+    sliced = evecs[:, :k] # representative data
+    top_indexes = top_cosine_similarity(sliced, movie_id, top_n)
 
     
 
@@ -487,3 +491,6 @@ def print_similar_movies(movie_data, movie_id, top_indexes):
 # get_mse(item_prediction_train,test_data_matrix)
 # get_mse(item_prediction_test,train_data)
 #
+
+def main():
+    
