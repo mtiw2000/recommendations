@@ -107,7 +107,7 @@ def get_mse(pred, actual):
 
 # top k collaborative
 
-def predict_topk(ratings, similarity, kind='user', k=40):
+def predict_topk(ratings, similarity, kind='user', k=50):
     pred = np.zeros(ratings.shape)
     if kind == 'user':
         for i in xrange(ratings.shape[0]):
@@ -126,11 +126,11 @@ def predict_topk(ratings, similarity, kind='user', k=40):
 
 
 
-def get_user_recommendations(ratings, similarity, input_value, k=50, r=10):
+def get_user_recommendations(ratings, similarity, userid_value, k=50, r=10):
     mean_rating = np.mean(train_data_matrix,1)
     train_data_matrix_nobias = train_data_matrix - mean_rating[:,np.newaxis]
-    pred = np.zeros([1, ratings.shape[1]])
-    top_k_users = np.argsort(similarity[:, input_value])[:-k - 1:-1]
+#    pred = np.zeros([1, ratings.shape[1]])
+    top_k_users = np.argsort(similarity[:, userid_value])[:-k - 1:-1]
     pred=similarity[userid_value, :][top_k_users].dot(train_data_matrix[top_k_users])/(np.sum(np.abs(similarity[userid_value,:][top_k_users])))
     top_recomendation=np.argsort(pred)[:-r - 1:-1]
     #
@@ -493,4 +493,10 @@ def print_similar_movies(movie_data, movie_id, top_indexes):
 #
 
 def main():
+
+    df_ratings, movie_lookup, movie_links, train_data_matrix, test_data_matrix = get_movies_data()
     
+    user_similarity = calculate_similarity(train_data_matrix, kind='user', metric_type='cosine')
+
+   v_top_reco,v_pred=get_user_recommendations(train_data_matrix,user_similarity,0,50,10)
+  
