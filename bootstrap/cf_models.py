@@ -124,25 +124,32 @@ def predict_topk(ratings, similarity, kind='user', k=40):
     return pred
 
 
-def get_user_recommendations(ratings, similarity, input_value, k=5, r=10):
+
+
+def get_user_recommendations(ratings, similarity, input_value, k=50, r=10):
+    mean_rating = np.mean(train_data_matrix,1)
+    train_data_matrix_nobias = train_data_matrix - mean_rating[:,np.newaxis]
     pred = np.zeros([1, ratings.shape[1]])
-    calc1 = np.zeros([k, 3])
     top_k_users = np.argsort(similarity[:, input_value])[:-k - 1:-1]
-    for j in xrange(ratings.shape[1]):
-        if ratings[input_value, j] == 0:
-            pred[0, j] = similarity[input_value, :][top_k_users].dot(ratings[:, j][top_k_users]) / (np.sum(np.abs(similarity[input_value,:][top_k_users])))
-
-    calc1[:, 0] = input_value
-    calc1[:, 1] = np.asarray(top_k_users)
-    calc1[:, 2] = similarity[input_value, top_k_users]
-
+    pred=similarity[userid_value, :][top_k_users].dot(train_data_matrix[top_k_users])/(np.sum(np.abs(similarity[userid_value,:][top_k_users])))
+    top_recomendation=np.argsort(pred)[:-r - 1:-1]
+    #
+#
+#    for j in xrange(ratings.shape[1]):
+#        if ratings[input_value, j] == 0:
+#            pred[0, j] = similarity[input_value, :][top_k_users].dot(ratings[:, j][top_k_users]) / (np.sum(np.abs(similarity[input_value,:][top_k_users])))
+#    top_recomendation = np.argsort(pred[0, :])[:-r - 1:-1]
+#
     #    print similarity[input_data, :][top_k_users]
     #    print ratings[:, j][top_k_users]
-    top_recomendation = np.argsort(pred[0, :])[:-r - 1:-1]
 
     # print   pred[:, top_recomendation]
-    return top_recomendation , pred[:,top_recomendation],calc1
- 
+    return pred[np.newaxis,top_recomendation],top_recomendation 
+   
+
+
+#a=similarity[userid_value, :][top_k_users].dot(train_data_matrix[:, 0][top_k_users])/(np.sum(np.abs(similarity[userid_value,:][top_k_users])))
+
 
 
 def get_item_recommendations(ratings, similarity, input_value, k=5, r=10):
@@ -157,22 +164,8 @@ def get_item_recommendations(ratings, similarity, input_value, k=5, r=10):
     calc1[:, 2] = similarity[input_value, top_k_items]
     top_recomendation = np.argsort(pred[:,0])[:-r - 1:-1]
 
-    #    print similarity[input_data, :][top_k_users]
-    #    print ratings[:, j][top_k_users]
-    #  print pred[:, top_recomendations]
     return top_recomendation , pred[top_recomendation,:],calc1
 
-#    list1 = movie_lookup[movie_lookup['movie_id'].isin(df_ratings[df_ratings['item_id'].isin(top_recomendations)].movie_id.unique())]
-#    list2 = movie_links[movie_lookup['movie_id'].isin( df_ratings[df_ratings['item_id'].isin(top_recomendations)].movie_id.unique())]
-#    recommended_movies1 = pd.merge(list1,list2,on='movie_id')
-#    recommended_movies1['user_id']=i
-#    print recommended_movies1['title']
-#    
-#    recommended_movies = recommended_movies1.values.tolist()
-#    return recommended_movies,calc1
-
-
-# c,t=predict_single_topk(train_data_matrix,user_similarity,2,40,20)
 
 
 def get_poster(r_tmdbid):
@@ -209,9 +202,6 @@ def visualize(k_array,train_data_matrix,test_data_matrix,metric_type):
        user_test_mse += [get_mse(user_pred, test_data_matrix)]
        item_train_mse += [get_mse(item_pred, train_data_matrix)]
        item_test_mse += [get_mse(item_pred, test_data_matrix)]
-
-
-
 
     # %matplotlib inline
     sns.set()
@@ -253,15 +243,20 @@ def get_movies_data():
     n_users = df_ratings.user_id.unique().shape[0]
     n_items = df_ratings.item_id.unique().shape[0]
     rating_train, rating_test = cv.train_test_split(df_ratings, test_size=0.2)
+
     train_data_matrix = np.zeros((n_users, n_items))
-
-    for line in rating_train.itertuples():
-        train_data_matrix[line[1] - 1, line[5]] = line[3]
-
     test_data_matrix = np.zeros((n_users, n_items))
 
-    for line in rating_test.itertuples():
-        test_data_matrix[line[1] - 1, line[5]] = line[3]
+    train_data_matrix[df_ratings.user_id.values-1,df_ratings.item_id.values] = df_ratings.rating.values
+    test_data_matrix[df_ratings.user_id.values-1,df_ratings.item_id.values] = df_ratings.rating.values
+    
+
+#    for line in rating_train.itertuples():
+#        train_data_matrix[line[1] - 1, line[5]] = line[3]
+#
+#
+#    for line in rating_test.itertuples():
+#        test_data_matrix[line[1] - 1, line[5]] = line[3]
 
     return (df_ratings, movie_lookup, movie_links, train_data_matrix, test_data_matrix)
 
@@ -282,12 +277,12 @@ def print_similar_movies(movie_data, movie_id, top_indexes):
         print movie_data[movie_data.movie_id == id].title.values[0]
 
 
-
 def svd_similarity():
     
 
     os.chdir('C:\python_code\projects\movie_data')
-    print os.getcwd()
+    print (os.getcwd())
+    
     
 #start movie reco example 
     os.chdir('C:\python_code\projects\ml-1m')
@@ -318,8 +313,15 @@ def svd_similarity():
     
     A = normalised_mat / np.sqrt(num_movies - 1)
     
+    VT.shape
+    
 
-    U,S,VT = np.linalg.svd(A)
+    U,S,V = np.linalg.svd(A.T)
+    
+    b=a.dot(V.T)
+    
+    
+    a=np.diag(S)
     
     normalised_mat = ratings_mat - np.matrix(np.mean(ratings_mat, 1)).T
     cov_mat = np.cov(normalised_mat)
