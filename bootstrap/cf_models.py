@@ -73,13 +73,6 @@ import seaborn as sns
 # base_url = response['images']['base_url'] + 'w185'
 
 
-def calculate_similarity(ratings, kind='item', metric_type='cosine'):
-    if kind == 'item':
-        sim = 1 - pairwise_distances(ratings.T, metric=metric_type)
-    elif kind == 'user':
-        sim = 1 - pairwise_distances(ratings, metric=metric_type)
-
-    return sim
 
 
 def predict(ratings, similarity, type='user'):
@@ -104,12 +97,122 @@ def get_mse(pred, actual):
     actual = actual[actual.nonzero()].flatten()
     return sqrt(mean_squared_error(pred, actual))
 
-
 # top k collaborative
 
-def predict_topk(ratings, similarity, kind='user', k=40):
-    pred = np.zeros(ratings.shape)
+userid_value=0
+k=5
+r=5
+ratings=train_data_matrix
+
+similarity=calculate_similarity(train_data_matrix, kind='user', metric_type='cosine')
+
+
+
+def predict_user_topk(ratings, similarity, k=40,method=1):
+#    https://stackoverflow.com/questions/30332908/n-largest-values-in-each-row-of-ndarray
+
+    if method==1:
+        mean_rating = np.mean(ratings,1)
+        ratings_diff = (ratings - mean_rating[:, np.newaxis])
+        top_k_similar_users = np.argsort(similarity, axis=1)[:,:-k - 1:-1]
+        col_idx = np.arange(similarity.shape[0])[:,None]
+        top_k_similarity=similarity[col_idx,top_k_similar_users]
+        
+        top_k_ratings= ratings[top_k_similar_users]
+        pred=top_k_similarity.dot(top_k_ratings)/(sum_top_k_similarity[:,np.newaxis])
+        
+        top_k_similarity = similarity[top_k_similar_users]
+            
+        
+        pred=top_k_similarity.dot(top_k_ratings)
+        
+        /(sum_top_k_similarity[:,np.newaxis])
+    
+        
+        
+        a=
+        similarity[1,:][top_k_similar_users[1,0:4]]
+        
+        
+        a=top_k_similarity[0,:,:]
+
+#        top_k_ratings= ratings_diff[top_k_users][0,:,:]
+#        top_k_ratings= ratings[top_k_users][0,:,:]
+        top_k_ratings= ratings[top_k_users][0,:,:]
+        
+        
+        sum_top_k_similarity=np.sum(np.abs(top_k_similarity),axis=1)
+        
+#        pred=mean_rating[:,np.newaxis] +top_k_similarity.dot(top_k_ratings)/(sum_top_k_similarity[:,np.newaxis])
+    
+        pred=top_k_similarity.dot(top_k_ratings)/(sum_top_k_similarity[:,np.newaxis])
+    
+    if method==2:
+        pred = np.zeros(ratings.shape)
+        for i in xrange(ratings.shape[0]):
+            top_k_similar_users = np.argsort(similarity[:, i])[:-k - 1:-1]
+            for j in xrange(ratings.shape[1]):
+                pred[i, j] = similarity[i, :][top_k_users].dot(ratings[:, j][top_k_users])
+                pred[i, j] /= np.sum(np.abs(similarity[i, :][top_k_users]))
+        
+    
+    return pred
+
+
+
+            top_k_users2 = [np.argsort(similarity[:, 1])[:-k - 1:-1]]
+
+
+a=ratings[top_k_users]
+
+
+ratings=train_data_matrix
+k=5
+
+
+pred_1=predict_user_topk(train_data_matrix,similarity,5,1)
+
+pred_2=predict_user_topk(train_data_matrix,similarity,5,2)
+
+a = predict_topk(test_data_matrix,similarity)
+
+
+b=mean_rating[:, np.newaxis]
+
+c=top_k_similarity.dot(top_k_ratings)/(sum_top_k_similarity[:,np.newaxis])
+
+c[np.isnan(d)] = 0
+
+d= b +c
+
+
+ratings=train_data_matrix
+k=5
+
+
+a=get_mse(pred,test_data_matrix)    
+    
+    
+    k=5
+    a=similarity[:-k - 1:-1]
+    
+    arr = np.array([1, 3, 2, 4, 5])
+     arr.argsort()[-3:][::-1]
+     
+    
+    top_k_users = np.argsort(similarity[:-k - 1:-1],axis=0)
+    
+                             
+                             [:, userid_value])[:-k - 1:-1]
+
+    top_k_users = np.argsort(similarity[:, userid_value])[:-k - 1:-1]
+
+
+    a=top_k_users.T
+    
+
     if kind == 'user':
+        
         for i in xrange(ratings.shape[0]):
             top_k_users = [np.argsort(similarity[:, i])[:-k - 1:-1]]
             for j in xrange(ratings.shape[1]):
@@ -126,12 +229,13 @@ def predict_topk(ratings, similarity, kind='user', k=40):
 
 
 
-def get_user_recommendations(ratings, similarity, input_value, k=50, r=10):
-    mean_rating = np.mean(train_data_matrix,1)
-    train_data_matrix_nobias = train_data_matrix - mean_rating[:,np.newaxis]
-    pred = np.zeros([1, ratings.shape[1]])
-    top_k_users = np.argsort(similarity[:, input_value])[:-k - 1:-1]
-    pred=similarity[userid_value, :][top_k_users].dot(train_data_matrix[top_k_users])/(np.sum(np.abs(similarity[userid_value,:][top_k_users])))
+def get_user_recommendations(ratings, similarity, userid_value, k=50, r=10):
+#    pred = np.zeros(ratings.shape)
+    mean_rating = np.mean(ratings,1)
+    ratings_diff = (ratings - mean_rating[:, np.newaxis])
+#    pred = np.zeros([1, ratings.shape[1]])
+    top_k_users = np.argsort(similarity[:, userid_value])[:-k - 1:-1]
+    pred=  mean_rating[userid_value] +  similarity[userid_value, :][top_k_users].dot(ratings_diff[top_k_users])/(np.sum(np.abs(similarity[userid_value,:][top_k_users])))
     top_recomendation=np.argsort(pred)[:-r - 1:-1]
     #
 #
@@ -145,11 +249,14 @@ def get_user_recommendations(ratings, similarity, input_value, k=50, r=10):
 
     # print   pred[:, top_recomendation]
     return pred[np.newaxis,top_recomendation],top_recomendation 
-   
 
 
-#a=similarity[userid_value, :][top_k_users].dot(train_data_matrix[:, 0][top_k_users])/(np.sum(np.abs(similarity[userid_value,:][top_k_users])))
+userid_value=0
+r=5
 
+a,b=get_user_recommendations(train_data_matrix,similarity,0,5,5)
+
+a=similarity[userid_value, :][top_k_users].dot(train_data_matrix[:, 0][top_k_users])/(np.sum(np.abs(similarity[userid_value,:][top_k_users])))
 
 
 def get_item_recommendations(ratings, similarity, input_value, k=5, r=10):
@@ -165,7 +272,6 @@ def get_item_recommendations(ratings, similarity, input_value, k=5, r=10):
     top_recomendation = np.argsort(pred[:,0])[:-r - 1:-1]
 
     return top_recomendation , pred[top_recomendation,:],calc1
-
 
 
 def get_poster(r_tmdbid):
@@ -224,21 +330,22 @@ def visualize(k_array,train_data_matrix,test_data_matrix,metric_type):
 def get_movies_data():
 
     os.getcwd()
-    os.chdir('C:/python_code/recommendations/data')
+    os.chdir('C:/python_code/recommendations')
 
 
     header = ['user_id', 'movie_id', 'rating', 'timestamp']
-    df_ratings = pd.read_csv('ratings.csv', sep=',', names=header, header=0,
+    df_ratings = pd.read_csv('data/ratings.csv', sep=',', names=header, header=0,
                              dtype={'user_id': np.int, 'item_id': np.int, 'rating': np.float, 'timestamp': np.int})
     header = ['movie_id', 'title', 'generes']
-    movie_lookup = pd.read_csv('movies.csv', sep=',', names=header, header=0,
+    movie_lookup = pd.read_csv('data/movies.csv', sep=',', names=header, header=0,
                                dtype={'movieid': np.int, 'title': np.str, 'generes': np.str})
     header = ['movie_id', 'imdbid', 'tmdbid']
-    movie_links = pd.read_csv('links.csv', sep=',', names=header, header=0,
+    movie_links = pd.read_csv('data/links.csv', sep=',', names=header, header=0,
                               dtype={'movieid': np.int, 'imdbid': np.int, 'tmdbid': np.str})
     df_ratings['item_id'] = pd.factorize(df_ratings.movie_id)[0]
     movie_items = df_ratings[['item_id','movie_id']].copy().drop_duplicates()
     movie_lookup=movie_lookup.merge(movie_items, on ='movie_id')
+    
     
     n_users = df_ratings.user_id.unique().shape[0]
     n_items = df_ratings.item_id.unique().shape[0]
@@ -247,10 +354,13 @@ def get_movies_data():
     train_data_matrix = np.zeros((n_users, n_items))
     test_data_matrix = np.zeros((n_users, n_items))
 
-    train_data_matrix[df_ratings.user_id.values-1,df_ratings.item_id.values] = df_ratings.rating.values
-    test_data_matrix[df_ratings.user_id.values-1,df_ratings.item_id.values] = df_ratings.rating.values
+    train_data_matrix[rating_train.user_id.values-1,rating_train.item_id.values] = rating_train.rating.values
+    test_data_matrix[rating_test.user_id.values-1,rating_test.item_id.values] = rating_test.rating.values
     
-
+    writer = pd.ExcelWriter('data/df_ratings.xlsx', engine='xlsxwriter')
+    df_ratings.to_excel(writer, sheet_name='Sheet1')
+    writer.save()
+    
 #    for line in rating_train.itertuples():
 #        train_data_matrix[line[1] - 1, line[5]] = line[3]
 #
@@ -259,6 +369,15 @@ def get_movies_data():
 #        test_data_matrix[line[1] - 1, line[5]] = line[3]
 
     return (df_ratings, movie_lookup, movie_links, train_data_matrix, test_data_matrix)
+
+
+def calculate_similarity(ratings, kind='item', metric_type='cosine'):
+    if kind == 'item':
+        sim = 1 - pairwise_distances(ratings.T, metric=metric_type)
+    elif kind == 'user':
+        sim = 1 - pairwise_distances(ratings, metric=metric_type)
+
+    return sim
 
 
 def top_cosine_similarity(data, movie_id, top_n=10):
