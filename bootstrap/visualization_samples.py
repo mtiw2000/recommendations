@@ -6,11 +6,14 @@ Created on Mon Mar 26 15:07:34 2018
 
 @author: mtiw2
 """
+
 import sys
 import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
+
 
 plt.rcParams['backend'] = "Qt4Agg"
 
@@ -38,37 +41,28 @@ plt.show()
 
 # Random test data
 
-salary = pd.read_csv('data/european_programmer_salary.csv')
-salary.columns = ['Experience', 'Salary','Gender', 'Country']
-salary.head()
+budget = pd.read_csv("data/mn-budget-detail-2014.csv")
+budget = budget.sort_values('amount',ascending=False)[:10]
 
-salary = salary.groupby(['Country']).mean()
-salary
+pd.options.display.mpl_style = 'default'
 
-country = salary.index[:5]
-country_array = np.arange(5)
-mean_salary = salary['Salary'].values[:5]
+budget_plot = budget.plot(kind="bar",x=budget["detail"],
+                          title="MN Capital Budget - 2014",
+                          legend=False)
 
-plt.bar()
+fig = budget_plot.get_figure()
+fig.savefig("data/2014-mn-capital-budget.png")
 
-plt.title("European Developers Salary")
+sns.set_style("darkgrid")
 
-plt.xticks(country_array, country)
+plt.xticks(rotation=90)
+
+bar_plot = sns.barplot(x=budget["detail"],y=budget["amount"],palette="muted" )
+plt.show()
 
 
+sns.set_style("whitegrid")
 
-# Y-Axis Label
-plt.ylabel("Salary in Euro")
-
-plt.bar(country_array, mean_salary, color='#f44c44')
-        
-        
-        
-# Basic Plot
-
-# Title
-
-# X-Axis Tick Labels
-
+ax = sns.stripplot(x=budget["detail"], y=budget["amount"],  jitter=True)
 plt.show()
 
