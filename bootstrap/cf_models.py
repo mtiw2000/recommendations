@@ -58,9 +58,13 @@ def predict_topk(ratings, similarity,kind='user', k=50):
     pred = np.zeros(ratings.shape)
 
     if kind == 'user':
-        mean_rating = masked_mean_rating1
+        mean_rating = masked_mean_rating0
         #        mean_rating = np.mean(ratings,1)
         ratings_diff = (ratings - mean_rating[:, np.newaxis])
+        
+        np.mean(ratings_diff[0,:])
+        
+        
         top_k_similar_users = np.argsort(similarity, axis=1)[:,:-k - 1:-1]
         col_idx = np.arange(similarity.shape[0])[:,None]
         top_k_similarity=similarity[col_idx,top_k_similar_users]
@@ -68,13 +72,20 @@ def predict_topk(ratings, similarity,kind='user', k=50):
         for i in xrange(top_k_similar_users.shape[0]):
             pred[i, :]= masked_mean_rating1[i] + (top_k_similarity[i,:].dot(ratings_diff[top_k_similar_users[i,:]])/np.sum(np.abs(top_k_similarity[i,:])))
     
+    if kind == 'item':
+        
         
     return pred
 
 
 
-def predict_item_topk(ratings, similarity, k=50,method=2):
+def predict_item_topk(ratings, similarity, k=50):
 #    https://stackoverflow.com/questions/30332908/n-largest-values-in-each-row-of-ndarray
+
+    masked_rating = np.ma.masked_array(ratings, mask=ratings==0)
+    masked_mean_rating0=masked_rating.mean(axis=0)
+    masked_mean_rating1=masked_rating.mean(axis=1)
+    pred = np.zeros(ratings.shape)
 
     mean_rating = np.mean(ratings,1)
     ratings_diff = (ratings - mean_rating[:, np.newaxis])
@@ -229,8 +240,8 @@ def get_movies_data():
     conn.execute('''create table rating_detail
                  (user_id text,
                   movie_id text,
-                  rating text,
-                  item_id text)
+                  rating numeric,
+                  item_id numeric)
                  ''')
 
     df_ratings.to_sql("rating_detail", conn, if_exists="replace")
